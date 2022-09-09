@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-Scala Native is an optimizing ahead-of-time compiler for scala. Traditional scala code is compiled to jvm-interpretable bytecode, while Scala Native directly compiles scala code to binaries. Here are two main steps in Scala Native to compile the scala code to binaries: first the scala code is compiled to `nir` by NIR compiler; second `nir` code is loaded, optimized, and transformed to `llvm-ir` code by Scala Native Linker. During the GSoC period, my task is to investigate how to speed up Scala Native Linker. Here are four products in my project: 
+Scala Native is an optimizing ahead-of-time compiler and runtime for scala. Traditional Scala code is compiled to JVM-interpretable bytecode, while Scala Native directly compiles scala code to binaries. Here are two main steps in Scala Native to compile the scala code to binaries: first the scala code is compiled to the traditional bytecode and `NIR`(Native Intermediate Representation) by dedicated testing compiler plugin; second `NIR` code is loaded, optimized, and transformed to `IIVM-IR` code by Scala Native Linker. During the GSoC period, my task was to investigate how to speed up Scala Native Linker. Here are four products in my project:
 
 * Build benchmarks for evaluating the performance of Scala Native, and create an automatic test script to measure the compilation and runtime performance
 
@@ -62,32 +62,32 @@ This section is helpful if anyone would like to debug or modify the autotest scr
 # 3. Incremental Compilation
 Incremental compilation is the technique that accelerates the compilation if there are few changes between two compilations in a project. Generally, when developing software, programmers follow edit-compile-run cycles: we change some source codes in the program, compile and execute it to see runtime results, and then repeat the steps above until we get the expected output. incremental compilation is based on a straightforward idea: we don't need to recompile the whole project if changes in edit phase are few. Instead, we only recompile the changed libraries or packages, which would notably decrease the compilation time. 
 
-A non-trivial topic in the incremental compilation is how to detect the change in the code. One simple method is to record the hash code of each file and compare them with file hash codes in the last compilation. However, this method doesn't work in Scala Native. The reason is that Scala Native filters out the unused functions when compiling `nir` files to `llvm-ir` files. Here is a case: the package `A` is not changed between two compilations, but a function `foo` in the package `A` is used in the second compilation. If `foo` is not used in the first compilation, we have to recompile package `A`, because `foo` is omitted by Scala Native Linker in the first compilation. 
+A non-trivial topic in the incremental compilation is how to detect the change in the code. One simple method is to record the hash code of each file and compare them with file hash codes in the last compilation. However, this method doesn't work in Scala Native. The reason is that Scala Native skips the unused code in the linking phase. Here is a case: the package `A` is not changed between two compilations, but a function `foo` in the package `A` is used in the second compilation. If `foo` is not used in the first compilation, we have to recompile package `A`, because `foo` is omitted by Scala Native Linker in the first compilation. 
 
-Therefore, we collect the hash code of each definition after loading and optimizing `nir` code. We compare hash codes with the previous compilation and select definitions that are changed. Fortunately, the definitions in Scala Native are represented by case class or case object, which makes it easier to compute the hash code, since the hash code of case class or case object in Scala remains the same in different executions. 
+Therefore, we collect the hash code of each definition after loading and optimizing `NIR` code. We compare hash codes with the previous compilation and select definitions that are changed. Fortunately, the definitions in Scala Native are represented by case class or case object, which makes it easier to compute the hash code, since the hash code of case class or case object in Scala remains the same in different executions. 
 
-Another important factor is the granularity of the incremental compilation. Initially, we set the granularity as class and generate one `llvm-ir` file for each class. A `llvm-ir` file should be recompiled if its corresponding class has changed definitions. However, it introduces high overheads on the first compilation, since a project usually has hundreds or even thousands of classes, so we have to compile hundreds or thousands of `llvm-ir` files in the first compilation. Therefore, we set the granularity as package, which introduces negligible overheads on the first compilation, and has remarkable improvement on later compilations. 
+Another important factor is the granularity of the incremental compilation. Initially, we set the granularity as class and generate one `IIVM-IR` file for each class. A `IIVM-IR` file should be recompiled if its corresponding class has changed definitions. However, it introduces high overheads on the first compilation, since a project usually has hundreds or even thousands of classes, so we have to compile hundreds or thousands of `IIVM-IR` files in the first compilation. Therefore, we set the granularity as package, which introduces negligible overheads on the first compilation, and has remarkable improvement on later compilations. 
 
 We test the performance of incremental compilation on the Scala Native benchmark that we discussed in the second section. The baseline is the original Scala Native version. All experiments are done in debug mode because incremental compilation is mainly used in debug mode. First, we compare the time cost of the first compilation between incremental compilation and baseline, and then change a line in the project and compare the time cost of the second compilation. 
 
 The comparison in the first compilation: 
 ![image](./FirstComp.png)
 
-The blue line is the time cost of baseline, and the orange line is the time cost of incremental compilation. The overhead in the incremental compilation is caused by generating more `llvm-ir` files than the baseline. The number of `llvm-ir` files in baseline equals to the number of CPU cores, while the number in the incremental compilation version equals the number of packages in the project. 
+The blue line is the time cost of baseline, and the orange line is the time cost of incremental compilation. The overhead in the incremental compilation is caused by generating more `IIVM-IR` files than the baseline. The number of `IIVM-IR` files in baseline equals to the number of CPU cores, while the number in the incremental compilation version equals the number of packages in the project. 
 
 The comparison in the later compilations: 
 ![image](./SecondComp.png)
 
 The average improvement of incremental compilation is 21%, which has already surpassed 20%, the expected result in my GSoC proposal. 
 
-The steps that Scala Native Linker compiles `nir` is: 
-* Link `nir` file and reach all used `nir` classes and definitions
-* Optimize `nir` definitions
-* Generate `llvm-ir` code(`.ll` file)
+The steps that Scala Native Linker compiles `NIR` is: 
+* Link `NIR` file and reach all used `NIR` classes and definitions
+* Optimize `NIR` definitions
+* Generate `IIVM-IR` code(`.ll` file)
 * Compile native code(`.ll.o` file)
 * Link native code
 
-incremental compilation decreases the time of generating `llvm-ir` code and compiling native code because we only need to compile `.ll` and `.ll.o` files that are changed. 
+incremental compilation decreases the time of generating `IIVM-IR` code and compiling native code because we only need to compile `.ll` and `.ll.o` files that are changed. 
 
 In the later compilations, the comparison of time cost of llvm code generation is:
 
@@ -97,14 +97,14 @@ And the comparison of time cost of native code compilation is:
 
 ![image](./native-comp.png)
 
-Overall, incremental compilation is a powerful technique that improve the performance of Scala Native by 21%. The push request can be seen [here](https://github.com/scala-native/scala-native/pull/2777).
+Overall, the incremental compilation is a powerful technique that improves the performance of Scala Native by 21%. The push request can be seen [here](https://github.com/scala-native/scala-native/pull/2777).
 
 # 3. Scala Native Optimizer Profile
-Interflow is the interprocedural and flow-sensitive optimizer in Scala Native. We design a separate `nir` optimizer in Scala Native because `llvm-ir` doesn't support object-oriented features, so the LLVM optimizer is not fittable for the optimization of `nir`.  The Interflow optimizer supports several optimizations, such as flow-sensitive type inference, inline and method duplication, etc. 
+Interflow is the interprocedural and flow-sensitive optimizer in Scala Native. We design a separate `NIR` optimizer in Scala Native because `IIVM-IR` doesn't support object-oriented features, so the LLVM optimizer is not fittable for the optimization of `NIR`.  The Interflow optimizer supports several optimizations, such as flow-sensitive type inference, inline and method duplication, etc. 
 
-Generally, `nir` code optimization in release mode is the most time-consuming part of Scala Native. We notice that compiling some large Scala projects, for example, [scalafmt](https://github.com/tgodzik/scalafmt) is stuck in the optimization phase. The branch `add-scala-native` in this repository supports Scala Native Compilation, but the original Scala Native occurs out of heap memory during the optimization phase in release mode, no matter how large heap size we set. Therefore, profiling Scala Native is needed to find out why this project is stuck. 
+Generally, `NIR` code optimization in release mode is the most time-consuming part of Scala Native. We notice that compiling some large Scala projects, for example, [scalafmt](https://github.com/tgodzik/scalafmt) is stuck in the optimization phase. The branch `add-scala-native` in this repository supports Scala Native Compilation, but the original Scala Native occurs out of heap memory during the optimization phase in release mode, no matter how large heap size we set. Therefore, profiling Scala Native is needed to find out why this project is stuck. 
 
-Initially, we used `visualvm` to profile Scala Native, but then we found it is not a practical way. Scala Native reaches fifty thousand methods in `scalafmt`, which is already an extremely high burden for the Interflow optimizer. `visualvm` injects code to `scalafmt`, which further introduces numerous memory and computation cost. Usually, the profiling runs a whole day without any useful information until it exhausts all system resources. 
+Initially, we used `VisualVM` to profile Scala Native Linker, but then we found it is not a practical way. Scala Native reaches fifty thousand methods in `scalafmt`, which is already an extremely high burden for the Interflow optimizer. `visualvm` injects code to `scalafmt`, which further introduces numerous memory and computation cost. Usually, the profiling runs a whole day without any useful information until it exhausts all system resources. 
 
 Instead of using `visualvm`, adding logs is a feasible solution. Two issues emerge after analyzing logs in the critical paths of the Interflow optimizer. 
 
@@ -117,7 +117,7 @@ Unfortunately, this fix is not enough to make `scalafmt` pass the optimization p
 * The function has `inline` specifier
 * The type of arguments of the function is `virtual`
 
-The last point is a significant concept in the Interflow optimizer. Some operators such as `Classalloc`, `Arrayalloc`, and `box` allocate memory on the heap. The Interflow optimizer would delay their memory allocation until their allocated elements are used. In this way, the unused instances of the class are removed. However, if the method call has virtual arguments, the arguments are forced to be materialized when passing to the invoked function, which might lose some performance. Therefore, we can delay the materialization of the arguments by inlining the function call. 
+The last point is a significant concept in the Interflow optimizer. Some operators such as `Classalloc`, `Arrayalloc`, and `box` allocate memory on the heap. The Interflow optimizer would delay their memory allocation until their allocated elements are used or would escape a local scope. In this way, the unused instances of the class are removed. However, if the method call has virtual arguments, the arguments are forced to be materialized when passing to the invoked function, which might lose some performance. Therefore, we can delay the materialization of the arguments by inlining the function call. 
 
 The culprit of being stuck in the optimization phase is the nested inline. The Interflow optimizer uses a merge processor to optimize a function. If a function is visited for the first time, it would be pushed to the merge processor; if the function `foo` is inlined by other functions, it should also be pushed to the merge processor. For example, the function `foo` invokes function `bar`. Whether `foo` should inline `bar` is decided by the arguments of `foo`. Therefore pushing inlined function `foo` to the merge processor is necessary. 
 
