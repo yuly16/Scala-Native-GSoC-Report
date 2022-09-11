@@ -4,19 +4,20 @@
 
 Scala Native is an optimizing ahead-of-time compiler and runtime for scala. Traditional Scala code is compiled to JVM-interpretable bytecode, while Scala Native directly compiles scala code to binaries. Here are two main steps in Scala Native to compile the scala code to binaries: first the scala code is compiled to the traditional bytecode and `NIR`(Native Intermediate Representation) by dedicated testing compiler plugin; second `NIR` code is loaded, optimized, and transformed to `IIVM-IR` code by Scala Native Linker. During the GSoC period, my task was to investigate how to speed up Scala Native Linker. Here are four products in my project:
 
-* Build benchmarks for evaluating the performance of Scala Native, and create an automatic test script to measure the compilation and runtime performance
+* Build benchmarks for evaluating the performance of Scala Native, and create an automatic test script to measure the compilation and runtime performance: [scala-native-autotest](https://github.com/yuly16/scala-native-autotest)
 
-* Introduce incremental compilation to Scala Native, which reduces the build time by 21% on average. 
+* Introduce incremental compilation to Scala Native, which reduces the build time by 21% on average. [Incremental Compilation PR link](https://github.com/scala-native/scala-native/pull/2777)
 
-* Profile the optimizer of Scala Native. Based on the profile result, we decrease the memory cost and fix the issue that Scala Native is stuck when compiling very large projects on release mode.
+* Profile the optimizer of Scala Native. Based on the profile result, we decrease the memory cost and fix the issue that Scala Native is stuck when compiling very large projects on release mode. [Profiling optimizer PR link](https://github.com/scala-native/scala-native/pull/2819)
 
 * Investigate the feasibility of parallel optimization. The conclusion is that parallel optimization is nontrivial to implement in the current Scala Native optimizer. Finally, we will give some possible solutions to do parallel optimization in the future.
 
+* Other fixes of Scala Native, which has described in the last section.
 # 2. Scala Native Benchmark Evaluation
 
 ## 2.1 Introduction to Scala Native Autotest
 
-[Scala Native Autotest](https://github.com/yuly16/incremental-compilation-autotest) is the tool we created to automatically test the performance of Scala Native. The usage of the script is:
+[Scala Native Autotest](https://github.com/yuly16/scala-native-autotest) is the tool we created to automatically test the performance of Scala Native. The usage of the script is:
 
 ```
 ./autotest --scala SCALA-VERSION --scala-native SCALA-NATIVE-VERSION --benchmark-list <benchmarks list or non to run all>
