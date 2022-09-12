@@ -2,6 +2,8 @@
 
 ## 1. Introduction
 
+My topic of the GSoC project is Optimization of Scala Native linker. My mentor is Wojciech Mazur. I am very thankful for him during the GSoC period. He is very patient and always gave me precious advices. It is impossible for me to achieve these results without his help. 
+
 Scala Native is an optimizing ahead-of-time compiler and runtime for scala. Traditional Scala code is compiled to JVM-interpretable bytecode, while Scala Native directly compiles scala code to binaries. Here are two main steps in Scala Native to compile the scala code to binaries: first the scala code is compiled to the traditional bytecode and `NIR`(Native Intermediate Representation) by dedicated testing compiler plugin; second `NIR` code is loaded, optimized, and transformed to `IIVM-IR` code by Scala Native Linker. During the GSoC period, my task was to investigate how to speed up Scala Native Linker. Here are four products in my project:
 
 * Build benchmarks for evaluating the performance of Scala Native, and create an automatic test script to measure the compilation and runtime performance: [scala-native-autotest](https://github.com/yuly16/scala-native-autotest)
@@ -158,3 +160,7 @@ I found that `CollectLocalValDeps` and `Lower.Impl` extend transform. However, t
 ## 5.2 Add `SortedSet` in MergeProcessor
 
 In the function `advance` in `MergeProcessor`, we change the type of `todo` to `SortedSet`, which makes the code cleaner and avoids transforming `todo` to array and sorting it when executing advance as the previous version. The push request link is [here](https://github.com/scala-native/scala-native/pull/2819). All work is done and it will be merged within a week. 
+
+## 6. Future work
+
+The future work is to implement parallel optimization based on our investigation. Changing the logic of the interflow optimizer is necessary. It is a quite difficult task, but I believe it will bring the huge improvement on Scala Native. 
