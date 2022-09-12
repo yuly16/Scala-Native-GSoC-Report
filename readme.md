@@ -6,9 +6,9 @@ Scala Native is an optimizing ahead-of-time compiler and runtime for scala. Trad
 
 * Build benchmarks for evaluating the performance of Scala Native, and create an automatic test script to measure the compilation and runtime performance: [scala-native-autotest](https://github.com/yuly16/scala-native-autotest)
 
-* Introduce incremental compilation to Scala Native, which reduces the build time by 21% on average. [Incremental Compilation PR link](https://github.com/scala-native/scala-native/pull/2777)
+* Introduce incremental compilation to Scala Native, which reduces the build time by 21% on average: [Incremental Compilation PR link](https://github.com/scala-native/scala-native/pull/2777). Currently all works are done, and it will be merged within one week. 
 
-* Profile the optimizer of Scala Native. Based on the profile result, we decrease the memory cost and fix the issue that Scala Native is stuck when compiling very large projects on release mode. [Profiling optimizer PR link](https://github.com/scala-native/scala-native/pull/2819)
+* Profile the optimizer of Scala Native. Based on the profile result, we decrease the memory cost and fix the issue that Scala Native is stuck when compiling very large projects on release mode: [Profiling optimizer PR link](https://github.com/scala-native/scala-native/pull/2819) Currently all works are done, and now we are improving the code quality to make it easier to read. It will be merged within one week. 
 
 * Investigate the feasibility of parallel optimization. The conclusion is that parallel optimization is nontrivial to implement in the current Scala Native optimizer. Finally, we will give some possible solutions to do parallel optimization in the future.
 
@@ -153,8 +153,8 @@ In summary, if we would like to implement parallel optimization in the future, w
 # 5. Other contributions
 
 ## 5.1 Simplify `CollectLocalValDeps` and `Lower.Impl`
-I found that `CollectLocalValDeps` and `Lower.Impl` extend transform. However, the function `onType` in transform does nothing. Therefore we can add `override def onType(ty: Type): Type = ty` in the two classes to avoid unnecessary calculations. The push request link is [here](https://github.com/scala-native/scala-native/pull/2772)
+I found that `CollectLocalValDeps` and `Lower.Impl` extend transform. However, the function `onType` in transform does nothing. Therefore we can add `override def onType(ty: Type): Type = ty` in the two classes to avoid unnecessary calculations. The push request link is [here](https://github.com/scala-native/scala-native/pull/2772). This work has been merged to Scala Native. 
 
 ## 5.2 Add `SortedSet` in MergeProcessor
 
-In the function `advance` in `MergeProcessor`, we change the type of `todo` to `SortedSet`, which makes the code cleaner and avoids transforming `todo` to array and sorting it when executing advance as the previous version. The push request link is [here](https://github.com/scala-native/scala-native/pull/2819)
+In the function `advance` in `MergeProcessor`, we change the type of `todo` to `SortedSet`, which makes the code cleaner and avoids transforming `todo` to array and sorting it when executing advance as the previous version. The push request link is [here](https://github.com/scala-native/scala-native/pull/2819). All work is done and it will be merged within a week. 
