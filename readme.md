@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-My topic of the GSoC project is Optimization of Scala Native linker. My mentor is Wojciech Mazur. I am very thankful for him during the GSoC period. He is very patient and always gave me precious advices. It is impossible for me to achieve these results without his help. 
+My topic of the GSoC project is Optimization of Scala Native linker. I am very thankful for my mentor Wojciech Mazur during the GSoC period. He is very patient and always gave me precious advices. It is impossible for me to achieve these results without his help. 
 
 Scala Native is an optimizing ahead-of-time compiler and runtime for scala. Traditional Scala code is compiled to JVM-interpretable bytecode, while Scala Native directly compiles scala code to binaries. Here are two main steps in Scala Native to compile the scala code to binaries: first the scala code is compiled to the traditional bytecode and `NIR`(Native Intermediate Representation) by dedicated testing compiler plugin; second `NIR` code is loaded, optimized, and transformed to `IIVM-IR` code by Scala Native Linker. During the GSoC period, my task was to investigate how to speed up Scala Native Linker. Here are four products in my project:
 
